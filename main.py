@@ -14,11 +14,10 @@ import datetime
 import os
 from openpyxl import Workbook, load_workbook
 
-# Настройки Canter
+# Константы Canter
 AMORT = 10
 TAX = 0.06
 AVG_SPEED = 60
-OIL_INTERVAL = 5000
 EXCEL_FILE = "Canter_Logbook.xlsx"
 
 KV = '''
@@ -28,7 +27,7 @@ MDScreen:
         md_bg_color: 0.95, 0.95, 0.95, 1
 
         MDTopAppBar:
-            title: "CanterPro Ultra v1.0"
+            title: "CanterPro Ultra"
             elevation: 4
 
         MDScrollView:
@@ -74,7 +73,7 @@ MDScreen:
                     adaptive_height: True
 
                     MDLabel:
-                        text: "Данные рейса"
+                        text: "Данные для расчета"
                         font_style: "H6"
 
                     MDTextField:
@@ -91,21 +90,20 @@ MDScreen:
 
                     MDTextField:
                         id: fuel_liters
-                        hint_text: "Расход топлива (литры факт)"
+                        hint_text: "Топливо (литры факт)"
                         input_filter: "float"
                         mode: "rectangle"
                     
                     MDTextField:
                         id: fuel_price
-                        hint_text: "Цена ДТ за литр (₽)"
+                        hint_text: "Цена ДТ (₽/л)"
                         input_filter: "float"
                         mode: "rectangle"
 
                 MDRaisedButton:
-                    text: "РАССЧИТАТЬ ПОЛНЫЙ ОТЧЕТ"
+                    text: "СФОРМИРОВАТЬ ОТЧЕТ"
                     md_bg_color: "green"
                     size_hint_x: 1
-                    height: dp(50)
                     on_release: app.generate_full_report()
 
                 MDCard:
@@ -114,44 +112,36 @@ MDScreen:
                     padding: dp(16)
                     radius: [15,]
                     elevation: 3
-                    md_bg_color: 1, 1, 1, 1
                     adaptive_height: True
                     opacity: 0
 
                     MDLabel:
                         id: report_text
                         text: ""
-                        font_style: "Caption"
+                        font_style: "Body2"
                         halign: "left"
-                        theme_text_color: "Primary"
 '''
 
 class CanterApp(MDApp):
     def build(self):
         self.theme_cls.primary_palette = "DeepPurple"
-        # Логика приема данных из Яндекса (Share)
         if platform == 'android':
             from android import python_act
             intent = python_act.getIntent()
-            shared_text = intent.getStringExtra("android.intent.extra.TEXT")
-            if shared_text:
-                self.parse_shared_data(shared_text)
+            text = intent.getStringExtra("android.intent.extra.TEXT")
+            if text: self.parse_shared_data(text)
         return Builder.load_string(KV)
 
     def parse_shared_data(self, text):
-        # Ищем км в строке типа "Маршрут 154 км"
-        found = re.findall(r'(\d+)\s*км', text)
-        if found:
-            self.root.ids.distance.text = found[0]
+        km = re.findall(r'(\d+)\s*км', text)
+        if km: self.root.ids.distance.text = km[0]
 
     def open_yandex_navi(self):
-        start = self.root.ids.route_from.text
-        end = self.root.ids.route_to.text
+        start, end = self.root.ids.route_from.text, self.root.ids.route_to.text
         if start and end:
-            url = f"yandexnavi://build_route_on_map?text_from={start}&text_to={end}"
-            webbrowser.open(url)
+            webbrowser.open(f"yandexnavi://build_route_on_map?text_from={start}&text_to={end}")
         else:
-            self.root.ids.report_text.text = "Введите точки маршрута!"
+            self.root.ids.report_text.text = "Введите точки!"
             self.root.ids.report_card.opacity = 1
 
     def generate_full_report(self):
@@ -160,56 +150,39 @@ class CanterApp(MDApp):
             r = float(self.root.ids.rate.text)
             liters = float(self.root.ids.fuel_liters.text)
             f_p = float(self.root.ids.fuel_price.text)
-            route = f"{self.root.ids.route_from.text} - {self.root.ids.route_to.text}"
-
-            # Экономика
-            income = d * r if r < 1000 else r # Если ставка > 1000, считаем как фиксу
+            
+            income = d * r if r < 1000 else r
             fuel_cost = liters * f_p
             amort_cost = d * AMORT
             tax_cost = income * TAX
             profit = income - fuel_cost - amort_cost - tax_cost
             
-            consumption = (liters / d * 100) if d > 0 else 0
-            total_h = (d / AVG_SPEED) + 1 # +1 час на погрузку
-
-            # Текст отчета
             report = (
-                f"📋 ДЕТАЛЬНЫЙ ОТЧЕТ\n"
-                f"📍 {route}\n"
-                f"━━━━━━━━━━━━━━━━━━━━\n"
-                f"🚚 ЛОГИСТИКА:\n"
-                f"• Пробег: {d} км\n"
-                f"• Время (прим.): {int(total_h)}ч\n"
-                f"━━━━━━━━━━━━━━━━━━━━\n"
-                f"💰 ЭКОНОМИКА (₽):\n"
-                f"• Доход: {income:,.0f}\n"
-                f"• Топливо: -{fuel_cost:,.0f}\n"
-                f"• Амортизация: -{amort_cost:,.0f}\n"
-                f"• Налог: -{tax_cost:,.0f}\n"
+                f"📋 ОТЧЕТ ПО РЕЙСУ\n"
+                f"━━━━━━━━━━━━━━\n"
+                f"📏 Дистанция: {d} км\n"
+                f"💰 Доход: {income:,.0f} ₽\n"
+                f"⛽ Топливо: -{fuel_cost:,.0f} ₽\n"
+                f"🔧 Амортизация: -{amort_cost:,.0f} ₽\n"
+                f"🏛 Налог (6%): -{tax_cost:,.0f} ₽\n"
+                f"━━━━━━━━━━━━━━\n"
                 f"🏆 ПРИБЫЛЬ: {profit:,.0f} ₽\n"
-                f"━━━━━━━━━━━━━━━━━━━━\n"
-                f"📈 АНАЛИТИКА:\n"
-                f"• Расход: {consumption:.1f} л/100\n"
-                f"• Маржа: {(profit/income*100) if income>0 else 0:.1f}%\n"
+                f"📈 Расход: {(liters/d*100):.1f} л/100"
             )
-
             self.root.ids.report_text.text = report
             self.root.ids.report_card.opacity = 1
-            self.save_to_excel(route, d, income, profit, consumption)
-
-        except Exception as e:
-            self.root.ids.report_text.text = f"Ошибка: Заполните все поля цифрами!"
+            self.save_to_excel(d, income, profit)
+        except:
+            self.root.ids.report_text.text = "Ошибка данных!"
             self.root.ids.report_card.opacity = 1
 
-    def save_to_excel(self, route, d, inc, prof, cons):
+    def save_to_excel(self, d, inc, prof):
         if not os.path.exists(EXCEL_FILE):
-            wb = Workbook()
-            ws = wb.active
-            ws.append(["Дата", "Маршрут", "КМ", "Доход", "Прибыль", "Расход"])
+            wb = Workbook(); ws = wb.active
+            ws.append(["Дата", "КМ", "Доход", "Прибыль"])
         else:
-            wb = load_workbook(EXCEL_FILE)
-            ws = wb.active
-        ws.append([datetime.datetime.now().strftime("%d.%m.%Y"), route, d, inc, prof, cons])
+            wb = load_workbook(EXCEL_FILE); ws = wb.active
+        ws.append([datetime.datetime.now().strftime("%d.%m.%Y"), d, inc, prof])
         wb.save(EXCEL_FILE)
 
 if __name__ == "__main__":
