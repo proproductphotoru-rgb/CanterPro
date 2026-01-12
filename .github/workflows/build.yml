@@ -13,19 +13,19 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.10'
+          python-version: '3.11'
 
       - name: Install System Deps
         run: |
           sudo apt-get update
           sudo apt-get install -y build-essential git python3-dev zip unzip openjdk-17-jdk ffmpeg libsdl2-dev
           pip install --upgrade pip
-          pip install Cython==0.29.33 buildozer
+          # Устанавливаем стабильную связку Cython и Buildozer
+          pip install "Cython<3.0" buildozer
 
       - name: Build APK
         run: |
-          export PATH=$PATH:$HOME/.local/bin
-          buildozer android clean
+          # Мы убрали 'clean', чтобы не вызывать FileNotFoundError
           yes | buildozer -v android debug
 
       - name: Upload Artifact
