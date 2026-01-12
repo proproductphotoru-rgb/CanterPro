@@ -1,8 +1,23 @@
-# Укажите точную версию NDK, которую он просит
-android.ndk = 25b
+[app]
+title = CanterPro
+package.name = canterpro
+package.domain = org.canter
+source.dir = .
+source.include_exts = py,png,jpg,kv,atlas
+version = 0.1
 
-# Укажите версию SDK (34 — стабильная)
-android.sdk = 34
-
-# Уберите лишние требования, оставим только базу для проверки
+# Оставляем только базовый Flet и certifi для работы интернета
 requirements = python3,flet==0.21.0,hostpython3,certifi
+
+orientation = portrait
+fullscreen = 0
+android.archs = arm64-v8a
+android.api = 34
+android.minapi = 21
+android.ndk = 25b
+android.accept_sdk_license = True
+android.permissions = INTERNET
+android.allow_root = 1
+
+[buildozer]
+log_level = 2
