@@ -1,108 +1,216 @@
-import flet as ft
+from kivymd.app import MDApp
+from kivymd.uix.screen import MDScreen
+from kivymd.uix.boxlayout import MDBoxLayout
+from kivymd.uix.button import MDRaisedButton
+from kivymd.uix.textfield import MDTextField
+from kivymd.uix.label import MDLabel
+from kivymd.uix.scrollview import MDScrollView
+from kivymd.uix.card import MDCard
+from kivy.lang import Builder
+from kivy.utils import platform
+import webbrowser
+import re
 import datetime
+import os
+from openpyxl import Workbook, load_workbook
 
-def main(page: ft.Page):
-    page.title = "Бортовой журнал Canter"
-    page.theme_mode = ft.ThemeMode.DARK
-    page.scroll = ft.ScrollMode.AUTO
-    
-    # --- Константы из вашего кода ---
-    AMORT = 10      # Амортизация руб/км
-    TAX = 0.06      # Налог 6%
-    OIL_INTERVAL = 5000
-    
-    # Переменные состояния (в реальном приложении их лучше сохранять в базу данных)
-    # Для первого запуска ставим примерные значения
-    state = {
-        "total_km": 150000, 
-        "last_oil_km": 148500
-    }
+# Настройки Canter
+AMORT = 10
+TAX = 0.06
+AVG_SPEED = 60
+OIL_INTERVAL = 5000
+EXCEL_FILE = "Canter_Logbook.xlsx"
 
-    # --- Поля ввода ---
-    route_input = ft.TextField(label="Маршрут (откуда - куда)", icon=ft.icons.MAP)
-    dist_input = ft.TextField(label="Дистанция (км)", keyboard_type=ft.KeyboardType.NUMBER, icon=ft.icons.SPEED)
-    pay_val_input = ft.TextField(label="Ставка (за км или фикса)", keyboard_type=ft.KeyboardType.NUMBER, icon=ft.icons.MONEY)
-    fuel_price_input = ft.TextField(label="Цена ДТ (литр)", keyboard_type=ft.KeyboardType.NUMBER, icon=ft.icons.LOCAL_GAS_STATION)
-    liters_input = ft.TextField(label="Сожжено литров (факт)", keyboard_type=ft.KeyboardType.NUMBER, icon=ft.icons.OPACITY)
-    
-    pay_type = ft.RadioGroup(content=ft.Row([
-        ft.Radio(value="km", label="За КМ"),
-        ft.Radio(value="fix", label="Фикса"),
-    ]))
-    pay_type.value = "km"
+KV = '''
+MDScreen:
+    MDBoxLayout:
+        orientation: 'vertical'
+        md_bg_color: 0.95, 0.95, 0.95, 1
 
-    report_text = ft.Text(size=14, font_family="monospace")
+        MDTopAppBar:
+            title: "CanterPro Ultra v1.0"
+            elevation: 4
 
-    def calculate_logic(e):
+        MDScrollView:
+            MDBoxLayout:
+                orientation: 'vertical'
+                padding: dp(16)
+                spacing: dp(15)
+                adaptive_height: True
+
+                MDCard:
+                    orientation: 'vertical'
+                    padding: dp(16)
+                    spacing: dp(10)
+                    radius: [15,]
+                    elevation: 2
+                    adaptive_height: True
+
+                    MDLabel:
+                        text: "Маршрут и Навигация"
+                        font_style: "H6"
+                    
+                    MDTextField:
+                        id: route_from
+                        hint_text: "Откуда (Улица / Координаты)"
+                        mode: "outline"
+                    
+                    MDTextField:
+                        id: route_to
+                        hint_text: "Куда (Улица / Координаты)"
+                        mode: "outline"
+
+                    MDRaisedButton:
+                        text: "ОТКРЫТЬ В НАВИГАТОРЕ"
+                        pos_hint: {"center_x": .5}
+                        on_release: app.open_yandex_navi()
+
+                MDCard:
+                    orientation: 'vertical'
+                    padding: dp(16)
+                    spacing: dp(10)
+                    radius: [15,]
+                    elevation: 2
+                    adaptive_height: True
+
+                    MDLabel:
+                        text: "Данные рейса"
+                        font_style: "H6"
+
+                    MDTextField:
+                        id: distance
+                        hint_text: "Дистанция (км)"
+                        input_filter: "float"
+                        mode: "rectangle"
+
+                    MDTextField:
+                        id: rate
+                        hint_text: "Ставка (₽ за км или Фикса)"
+                        input_filter: "float"
+                        mode: "rectangle"
+
+                    MDTextField:
+                        id: fuel_liters
+                        hint_text: "Расход топлива (литры факт)"
+                        input_filter: "float"
+                        mode: "rectangle"
+                    
+                    MDTextField:
+                        id: fuel_price
+                        hint_text: "Цена ДТ за литр (₽)"
+                        input_filter: "float"
+                        mode: "rectangle"
+
+                MDRaisedButton:
+                    text: "РАССЧИТАТЬ ПОЛНЫЙ ОТЧЕТ"
+                    md_bg_color: "green"
+                    size_hint_x: 1
+                    height: dp(50)
+                    on_release: app.generate_full_report()
+
+                MDCard:
+                    id: report_card
+                    orientation: 'vertical'
+                    padding: dp(16)
+                    radius: [15,]
+                    elevation: 3
+                    md_bg_color: 1, 1, 1, 1
+                    adaptive_height: True
+                    opacity: 0
+
+                    MDLabel:
+                        id: report_text
+                        text: ""
+                        font_style: "Caption"
+                        halign: "left"
+                        theme_text_color: "Primary"
+'''
+
+class CanterApp(MDApp):
+    def build(self):
+        self.theme_cls.primary_palette = "DeepPurple"
+        # Логика приема данных из Яндекса (Share)
+        if platform == 'android':
+            from android import python_act
+            intent = python_act.getIntent()
+            shared_text = intent.getStringExtra("android.intent.extra.TEXT")
+            if shared_text:
+                self.parse_shared_data(shared_text)
+        return Builder.load_string(KV)
+
+    def parse_shared_data(self, text):
+        # Ищем км в строке типа "Маршрут 154 км"
+        found = re.findall(r'(\d+)\s*км', text)
+        if found:
+            self.root.ids.distance.text = found[0]
+
+    def open_yandex_navi(self):
+        start = self.root.ids.route_from.text
+        end = self.root.ids.route_to.text
+        if start and end:
+            url = f"yandexnavi://build_route_on_map?text_from={start}&text_to={end}"
+            webbrowser.open(url)
+        else:
+            self.root.ids.report_text.text = "Введите точки маршрута!"
+            self.root.ids.report_card.opacity = 1
+
+    def generate_full_report(self):
         try:
-            d = float(dist_input.value)
-            p_val = float(pay_val_input.value)
-            f_p = float(fuel_price_input.value)
-            liters = float(liters_input.value)
-            
-            # Финансы
-            income = (d * p_val) if pay_type.value == "km" else p_val
+            d = float(self.root.ids.distance.text)
+            r = float(self.root.ids.rate.text)
+            liters = float(self.root.ids.fuel_liters.text)
+            f_p = float(self.root.ids.fuel_price.text)
+            route = f"{self.root.ids.route_from.text} - {self.root.ids.route_to.text}"
+
+            # Экономика
+            income = d * r if r < 1000 else r # Если ставка > 1000, считаем как фиксу
             fuel_cost = liters * f_p
             amort_cost = d * AMORT
             tax_cost = income * TAX
-            profit = income - (fuel_cost + amort_cost + tax_cost)
+            profit = income - fuel_cost - amort_cost - tax_cost
             
-            # Масло
-            km_on_oil = (state["total_km"] + d) - state["last_oil_km"]
-            oil_left = OIL_INTERVAL - km_on_oil
-            
-            # Формирование отчета
-            report_text.value = (
-                f"📋 ОТЧЕТ: {route_input.value}\n"
-                f"━━━━━━━━━━━━━━━━━━━━━━━━\n"
-                f"💰 Доход:  {income:,.0f} ₽\n"
-                f"⛽ Топливо: -{fuel_cost:,.0f} ₽\n"
-                f"🔧 Аморт:   -{amort_cost:,.0f} ₽\n"
-                f"🧾 Налог:   -{tax_cost:,.0f} ₽\n"
-                f"━━━━━━━━━━━━━━━━━━━━━━━━\n"
+            consumption = (liters / d * 100) if d > 0 else 0
+            total_h = (d / AVG_SPEED) + 1 # +1 час на погрузку
+
+            # Текст отчета
+            report = (
+                f"📋 ДЕТАЛЬНЫЙ ОТЧЕТ\n"
+                f"📍 {route}\n"
+                f"━━━━━━━━━━━━━━━━━━━━\n"
+                f"🚚 ЛОГИСТИКА:\n"
+                f"• Пробег: {d} км\n"
+                f"• Время (прим.): {int(total_h)}ч\n"
+                f"━━━━━━━━━━━━━━━━━━━━\n"
+                f"💰 ЭКОНОМИКА (₽):\n"
+                f"• Доход: {income:,.0f}\n"
+                f"• Топливо: -{fuel_cost:,.0f}\n"
+                f"• Амортизация: -{amort_cost:,.0f}\n"
+                f"• Налог: -{tax_cost:,.0f}\n"
                 f"🏆 ПРИБЫЛЬ: {profit:,.0f} ₽\n"
-                f"📈 Расход: {(liters/d*100):.1f} л/100\n"
-                f"🛢 Масло до замены: {max(0, int(oil_left))} км"
+                f"━━━━━━━━━━━━━━━━━━━━\n"
+                f"📈 АНАЛИТИКА:\n"
+                f"• Расход: {consumption:.1f} л/100\n"
+                f"• Маржа: {(profit/income*100) if income>0 else 0:.1f}%\n"
             )
-            if oil_left < 500:
-                report_text.color = ft.colors.RED_400
-            else:
-                report_text.color = ft.colors.GREEN_400
-                
-        except Exception as ex:
-            report_text.value = "Ошибка: проверьте ввод данных"
-            report_text.color = ft.colors.ORANGE_400
-        
-        page.update()
 
-    # --- Интерфейс ---
-    page.add(
-        ft.AppBar(title=ft.Text("Canter Ultra Logistics"), bgcolor=ft.colors.BLUE_GREY_900),
-        ft.Container(
-            padding=20,
-            content=ft.Column([
-                ft.Text("Новый рейс", size=20, weight="bold"),
-                route_input,
-                ft.Row([dist_input, pay_val_input]),
-                ft.Text("Тип оплаты:"),
-                pay_type,
-                ft.Row([fuel_price_input, liters_input]),
-                ft.ElevatedButton(
-                    "РАССЧИТАТЬ И СОХРАНИТЬ", 
-                    icon=ft.icons.CALCULATE, 
-                    on_click=calculate_logic,
-                    style=ft.ButtonStyle(shape=ft.RoundedRectangleBorder(radius=10)),
-                    width=400
-                ),
-                ft.Divider(),
-                ft.Container(
-                    content=report_text,
-                    padding=15,
-                    bgcolor=ft.colors.BLACK12,
-                    border_radius=10
-                )
-            ])
-        )
-    )
+            self.root.ids.report_text.text = report
+            self.root.ids.report_card.opacity = 1
+            self.save_to_excel(route, d, income, profit, consumption)
 
-ft.app(target=main)
+        except Exception as e:
+            self.root.ids.report_text.text = f"Ошибка: Заполните все поля цифрами!"
+            self.root.ids.report_card.opacity = 1
+
+    def save_to_excel(self, route, d, inc, prof, cons):
+        if not os.path.exists(EXCEL_FILE):
+            wb = Workbook()
+            ws = wb.active
+            ws.append(["Дата", "Маршрут", "КМ", "Доход", "Прибыль", "Расход"])
+        else:
+            wb = load_workbook(EXCEL_FILE)
+            ws = wb.active
+        ws.append([datetime.datetime.now().strftime("%d.%m.%Y"), route, d, inc, prof, cons])
+        wb.save(EXCEL_FILE)
+
+if __name__ == "__main__":
+    CanterApp().run()
