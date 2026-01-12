@@ -9,27 +9,19 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
-
-      - name: Setup Python
-        uses: actions/setup-python@v5
+      - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-
-      - name: Install System Deps
+      - name: Install
         run: |
           sudo apt-get update
           sudo apt-get install -y build-essential git python3-dev zip unzip openjdk-17-jdk ffmpeg libsdl2-dev
           pip install --upgrade pip
-          # Устанавливаем стабильную связку Cython и Buildozer
           pip install "Cython<3.0" buildozer
-
-      - name: Build APK
+      - name: Build
         run: |
-          # Мы убрали 'clean', чтобы не вызывать FileNotFoundError
           yes | buildozer -v android debug
-
-      - name: Upload Artifact
-        uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v4
         with:
           name: canter-app
           path: bin/*.apk
