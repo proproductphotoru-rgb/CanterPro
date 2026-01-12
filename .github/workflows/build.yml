@@ -1,4 +1,4 @@
-name: Build CanterPro
+name: Build
 on:
   push:
     branches: [ main ]
@@ -12,12 +12,13 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      - name: Install
+      - name: Install dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y build-essential git python3-dev zip unzip openjdk-17-jdk ffmpeg libsdl2-dev
+          pip install --upgrade pip
           pip install "Cython<3.0" buildozer
-      - name: Build
+      - name: Build APK
         run: yes | buildozer -v android debug
       - uses: actions/upload-artifact@v4
         with:
