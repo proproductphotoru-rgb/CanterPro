@@ -6,7 +6,7 @@ source.dir = .
 source.include_exts = py,png,jpg,kv,atlas,xlsx
 version = 1.0
 
-# ВАЖНО: точные версии для стабильности
+# Строго зафиксированные требования
 requirements = python3,kivy==2.3.0,kivymd==1.2.0,pillow,openpyxl,android
 
 android.manifest.intent_filters = [ {"action": "android.intent.action.SEND", "category": "android.intent.category.DEFAULT", "data": {"mimeType": "text/plain"}} ]
