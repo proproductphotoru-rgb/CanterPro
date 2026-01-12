@@ -9,18 +9,27 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
         with:
           python-version: '3.10'
-      - name: Install
+
+      - name: Install System Deps
         run: |
           sudo apt-get update
           sudo apt-get install -y build-essential git python3-dev zip unzip openjdk-17-jdk ffmpeg libsdl2-dev
           pip install --upgrade pip
           pip install Cython==0.29.33 buildozer
-      - name: Build
-        run: yes | buildozer -v android debug
-      - uses: actions/upload-artifact@v4
+
+      - name: Build APK
+        run: |
+          export PATH=$PATH:$HOME/.local/bin
+          buildozer android clean
+          yes | buildozer -v android debug
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
         with:
           name: canter-app
           path: bin/*.apk
