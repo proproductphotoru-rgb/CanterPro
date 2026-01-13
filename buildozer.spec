@@ -6,21 +6,18 @@ source.dir = .
 source.include_exts = py,png,jpg,kv,atlas,xlsx
 version = 1.0
 
-# Оптимизированный список требований
-requirements = python3,kivy==2.2.1,kivymd==1.2.0,pillow,openpyxl,android,et_xmlfile,sqlite3
+requirements = python3,kivy==2.2.1,kivymd==1.2.0,pillow,openpyxl,android,et_xmlfile
 
 orientation = portrait
 fullscreen = 0
 
-# Настройки для Android 14
 android.archs = arm64-v8a
 android.api = 34
 android.minapi = 24
 android.ndk = 25b
 android.accept_sdk_license = True
 
-# Ускорение сборки за счет исключения ненужного
-android.no_byte_compile_python = False
+# Пропускаем компиляцию тестов Python для ускорения сборки
 android.python_optimise = True
 
 p4a.branch = master
