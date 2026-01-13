@@ -26,17 +26,18 @@ jobs:
           sudo apt-get install -y \
             build-essential git python3-dev ffmpeg libsdl2-dev libssl-dev \
             autoconf automake libtool pkg-config zlib1g-dev libncurses5-dev \
-            libncursesw5-dev libtinfo5 cmake libffi-dev libbz2-dev gettext
+            libncursesw5-dev libtinfo5 cmake libffi-dev libbz2-dev gettext \
+            libjpeg-dev libpng-dev
 
       - name: Install Buildozer, Cython and P4A
         run: |
           pip install --upgrade pip
-          # Устанавливаем всё заранее, чтобы Buildozer не искал пути сам
-          pip install Cython buildozer wheel python-for-android
+          pip install "Cython<3.0" buildozer wheel python-for-android
 
       - name: Build with Buildozer
         run: |
-          # Важно: убираем clean, чтобы не удалять то, что только что установили
+          # Указываем путь к p4a явно, чтобы избежать FileNotFoundError
+          export P4A_PATH=$(which p4a)
           buildozer -v android debug
         env:
           APP_ANDROID_ACCEPT_SDK_LICENSE: "1"
