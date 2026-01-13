@@ -20,8 +20,8 @@ jobs:
         with:
           python-version: '3.10'
 
-      # КЭШ: Сохраняет прогресс сборки между запусками
-      - name: Cache Buildozer
+      # КЭШ: Это критически важно для тяжелых сборок
+      - name: Cache Buildozer global directory
         uses: actions/cache@v4
         with:
           path: .buildozer
@@ -45,7 +45,7 @@ jobs:
 
       - name: Build with Buildozer
         run: |
-          # ВАЖНО: Мы больше НЕ удаляем .buildozer вручную, чтобы работал кэш
+          # ВАЖНО: Мы НЕ удаляем .buildozer, чтобы использовать кэш
           buildozer -v android debug
         env:
           APP_ANDROID_ACCEPT_SDK_LICENSE: "1"
