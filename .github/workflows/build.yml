@@ -28,15 +28,15 @@ jobs:
             autoconf automake libtool pkg-config zlib1g-dev libncurses5-dev \
             libncursesw5-dev libtinfo5 cmake libffi-dev libbz2-dev gettext
 
-      - name: Install Buildozer and Cython
+      - name: Install Buildozer, Cython and P4A
         run: |
           pip install --upgrade pip
-          pip install Cython buildozer wheel
+          # Устанавливаем всё заранее, чтобы Buildozer не искал пути сам
+          pip install Cython buildozer wheel python-for-android
 
       - name: Build with Buildozer
         run: |
-          # Полная очистка перед сборкой
-          buildozer android clean
+          # Важно: убираем clean, чтобы не удалять то, что только что установили
           buildozer -v android debug
         env:
           APP_ANDROID_ACCEPT_SDK_LICENSE: "1"
