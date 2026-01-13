@@ -22,13 +22,14 @@ jobs:
 
       - name: Install Tools
         run: |
-          sudo apt-get install -y build-essential git libsdl2-dev libssl-dev python3-dev
+          # Установка только необходимых библиотек без полного апдейта системы
+          sudo apt-get install -y build-essential git libsdl2-dev libssl-dev
           pip install --upgrade pip
-          pip install "Cython<3.0" buildozer wheel
+          pip install "Cython>=3.0.0" buildozer wheel
 
       - name: Build with Buildozer
         run: |
-          # Чистим все хвосты перед сборкой
+          # Полная очистка, чтобы разорвать круг старых ошибок
           buildozer android clean
           buildozer -v android debug
         env:
@@ -37,5 +38,5 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: CanterPro-Android15-Ready
+          name: CanterPro-Android15-v1.7
           path: bin/*.apk
