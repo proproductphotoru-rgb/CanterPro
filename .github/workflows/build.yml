@@ -10,11 +10,13 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Build with Buildozer Docker
-        uses: undercover-llc/buildozer-action@master
-        with:
-          command: buildozer android debug
-          repository_root: .
+      - name: Build with Buildozer Container
+        run: |
+          # Запуск сборки в официальном контейнере buildozer
+          docker run --volume "$(pwd)":/home/user/hostpath \
+            --env BUILDOZER_WARN_ON_ROOT=0 \
+            kivy/buildozer:latest \
+            android debug
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
