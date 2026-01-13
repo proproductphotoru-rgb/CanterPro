@@ -27,19 +27,18 @@ jobs:
             build-essential git python3-dev ffmpeg libsdl2-dev libssl-dev \
             autoconf automake libtool pkg-config zlib1g-dev libncurses5-dev \
             libncursesw5-dev libtinfo5 cmake libffi-dev libbz2-dev gettext \
-            libjpeg-dev libpng-dev
+            libjpeg-dev libpng-dev uuid-dev libsqlite3-dev
 
-      - name: Install Buildozer and Fixed Cython
+      - name: Install Buildozer and Cython
         run: |
           pip install --upgrade pip
-          # Версия 0.29.33 обязательна для стабильной сборки Kivy 2.2.1/2.3.0
+          # Фиксируем Cython для совместимости с рецептами Kivy
           pip install "Cython<3.0" buildozer wheel
 
       - name: Build with Buildozer
         run: |
-          # Удаляем остатки старых неудачных попыток
+          # Удаляем старые кэши, чтобы UUID подхватился корректно
           rm -rf .buildozer
-          # Запускаем сборку
           buildozer -v android debug
         env:
           APP_ANDROID_ACCEPT_SDK_LICENSE: "1"
