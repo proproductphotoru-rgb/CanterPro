@@ -1,8 +1,7 @@
-name: Build APK
+name: Build Android APK
 on:
   push:
     branches: [ main ]
-  workflow_dispatch:
 
 jobs:
   build:
@@ -21,30 +20,31 @@ jobs:
         with:
           python-version: '3.10'
 
-      # ИСПРАВЛЕНО: Убраны конфликтные библиотеки (ffmpeg, gstreamer, sdl2).
-      # Оставлены только инструменты для компиляции.
-      - name: Install Build Tools
+      - name: Install System Dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y \
-            build-essential git python3-dev \
-            libssl-dev libffi-dev \
-            zip unzip autoconf libtool pkg-config cmake \
-            zlib1g-dev gettext
+            build-essential git python3-dev ffmpeg libsdl2-dev libssl-dev \
+            autoconf automake libtool pkg-config zlib1g-dev libncurses5-dev \
+            libncursesw5-dev libtinfo5 cmake libffi-dev libbz2-dev gettext
 
-      - name: Install Buildozer & Cython
+      - name: Install Python Dependencies
         run: |
           pip install --upgrade pip
-          pip install "Cython<3.0"
-          pip install buildozer
+          # Устанавливаем Cython 3.0+, так как Kivy 2.3.0 в buildozer.spec его требует
+          pip install "Cython>=3.0" buildozer wheel
 
-      # yes | ... отвечает "y" на все вопросы установщика Android SDK
       - name: Build with Buildozer
         run: |
-          yes | buildozer android debug
+          # Очистка на всякий случай перед сборкой
+          buildozer android clean
+          # Сборка в режиме debug с подробным логом
+          buildozer -v android debug
+        env:
+          APP_ANDROID_ACCEPT_SDK_LICENSE: "1"
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: CanterPro-APK
+          name: package
           path: bin/*.apk
