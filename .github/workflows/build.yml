@@ -24,20 +24,19 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y \
-            build-essential git python3-dev ffmpeg libsdl2-dev libssl-dev \
+            build-essential git python3-dev libsdl2-dev libssl-dev \
             autoconf automake libtool pkg-config zlib1g-dev libncurses5-dev \
             libncursesw5-dev libtinfo5 cmake libffi-dev libbz2-dev gettext \
-            libjpeg-dev libpng-dev uuid-dev libsqlite3-dev \
             libxml2-dev libxslt1-dev
 
       - name: Install Buildozer and Cython
         run: |
           pip install --upgrade pip
-          pip install "Cython>=3.0.0" buildozer wheel
+          pip install "Cython<3.0" buildozer wheel
 
       - name: Build with Buildozer
         run: |
-          # После удаления кэша вручную, просто запускаем билд
+          buildozer android clean
           buildozer -v android debug
         env:
           APP_ANDROID_ACCEPT_SDK_LICENSE: "1"
@@ -45,5 +44,5 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: CanterPro-Android15-v1.4
+          name: CanterPro-Final
           path: bin/*.apk
