@@ -7,7 +7,8 @@ jobs:
   build:
     runs-on: ubuntu-22.04
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout Code
+        uses: actions/checkout@v4
 
       - name: Set up JDK 17
         uses: actions/setup-java@v4
@@ -16,7 +17,7 @@ jobs:
           java-version: '17'
 
       - name: Set up Python 3.10
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@v5 # ТЕПЕРЬ СТОИТ V5, ЭТО ИСПРАВЛЯЕТ ОШИБКУ ИЗ ЛОГА
         with:
           python-version: '3.10'
 
@@ -27,7 +28,7 @@ jobs:
 
       - name: Build with Buildozer
         run: |
-          # Прямая сборка без команды clean для предотвращения FileNotFoundError
+          # Прямая сборка без команды clean, которая вызывала FileNotFoundError
           buildozer -v android debug
         env:
           APP_ANDROID_ACCEPT_SDK_LICENSE: "1"
@@ -35,5 +36,5 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: CanterPro-v1.7
+          name: CanterPro-Android-15
           path: bin/*.apk
