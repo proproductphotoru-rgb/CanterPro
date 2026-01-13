@@ -12,11 +12,16 @@ jobs:
 
       - name: Build with Buildozer Container
         run: |
-          # Используем -i для интерактивного режима и передаем 'y' через пайп внутри оболочки
-          docker run -i --volume "$(pwd)":/home/user/hostpath \
+          # Создаем папку для кэша, чтобы ускорить следующие сборки
+          mkdir -p .buildozer
+          
+          # Запускаем сборку от имени текущего пользователя системы (runner)
+          # Это обходит проверку на root полностью
+          docker run --user "$(id -u):$(id -g)" \
+            --volume "$(pwd)":/home/user/hostpath \
             --env BUILDOZER_WARN_ON_ROOT=0 \
             kivy/buildozer:latest \
-            /bin/bash -c "echo 'y' | buildozer android debug"
+            buildozer android debug
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
