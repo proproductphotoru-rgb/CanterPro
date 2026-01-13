@@ -20,14 +20,6 @@ jobs:
         with:
           python-version: '3.10'
 
-      - name: Cache Buildozer
-        uses: actions/cache@v4
-        with:
-          path: .buildozer
-          key: ${{ runner.os }}-buildozer-api35-${{ hashFiles('buildozer.spec') }}
-          restore-keys: |
-            ${{ runner.os }}-buildozer-api35-
-
       - name: Install System Dependencies
         run: |
           sudo apt-get update
@@ -40,12 +32,13 @@ jobs:
       - name: Install Buildozer and Fixed Cython
         run: |
           pip install --upgrade pip
-          # Для Android 15 и Kivy 2.3.0 лучше всего подходит Cython до 3.0
-          pip install "Cython<3.0" buildozer wheel
+          # На Android 15 Cython 3.0.0+ работает стабильнее
+          pip install "Cython>=3.0.0" buildozer wheel
 
       - name: Build with Buildozer
         run: |
-          # Используем команду clean, если это первый билд под API 35
+          # Очистка важна для пересборки путей
+          buildozer android clean
           buildozer -v android debug
         env:
           APP_ANDROID_ACCEPT_SDK_LICENSE: "1"
@@ -53,5 +46,5 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: CanterPro-Package-Android15
+          name: CanterPro-Android15-Final
           path: bin/*.apk
