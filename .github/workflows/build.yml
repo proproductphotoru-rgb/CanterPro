@@ -20,17 +20,14 @@ jobs:
         with:
           python-version: '3.10'
 
-      # Продвинутый кэш
-      - name: Cache Buildozer and Android Tools
+      # Кэширование для ускорения и стабильности
+      - name: Cache Buildozer
         uses: actions/cache@v4
         with:
-          path: |
-            ~/.buildozer
-            .buildozer
-            ~/.gradle
-          key: ${{ runner.os }}-buildozer-v2-${{ hashFiles('buildozer.spec') }}
+          path: .buildozer
+          key: ${{ runner.os }}-buildozer-${{ hashFiles('buildozer.spec') }}
           restore-keys: |
-            ${{ runner.os }}-buildozer-v2-
+            ${{ runner.os }}-buildozer-
 
       - name: Install System Dependencies
         run: |
@@ -44,12 +41,12 @@ jobs:
       - name: Install Buildozer and Fixed Cython
         run: |
           pip install --upgrade pip
-          # Используем Cython 0.29.33 — это критически важно!
-          pip install "Cython==0.29.33" buildozer wheel
+          # Строго фиксируем Cython для Kivy 2.2.1
+          pip install "Cython<3.0" buildozer wheel
 
       - name: Build with Buildozer
         run: |
-          # Если билд упал, мы не чистим всё, а позволяем Buildozer восстановиться
+          # Запуск сборки без удаления кэша
           buildozer -v android debug
         env:
           APP_ANDROID_ACCEPT_SDK_LICENSE: "1"
