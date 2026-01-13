@@ -12,11 +12,11 @@ jobs:
 
       - name: Build with Buildozer Container
         run: |
-          # Команда 'yes y |' автоматически отвечает "y" на все вопросы терминала
-          docker run --volume "$(pwd)":/home/user/hostpath \
+          # Используем -i для интерактивного режима и передаем 'y' через пайп внутри оболочки
+          docker run -i --volume "$(pwd)":/home/user/hostpath \
             --env BUILDOZER_WARN_ON_ROOT=0 \
             kivy/buildozer:latest \
-            sh -c "yes y | buildozer android debug"
+            /bin/bash -c "echo 'y' | buildozer android debug"
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
