@@ -20,14 +20,17 @@ jobs:
         with:
           python-version: '3.10'
 
-      # КЭШ: Это критически важно для тяжелых сборок
-      - name: Cache Buildozer global directory
+      # Продвинутый кэш
+      - name: Cache Buildozer and Android Tools
         uses: actions/cache@v4
         with:
-          path: .buildozer
-          key: ${{ runner.os }}-buildozer-${{ hashFiles('buildozer.spec') }}
+          path: |
+            ~/.buildozer
+            .buildozer
+            ~/.gradle
+          key: ${{ runner.os }}-buildozer-v2-${{ hashFiles('buildozer.spec') }}
           restore-keys: |
-            ${{ runner.os }}-buildozer-
+            ${{ runner.os }}-buildozer-v2-
 
       - name: Install System Dependencies
         run: |
@@ -38,14 +41,15 @@ jobs:
             libncursesw5-dev libtinfo5 cmake libffi-dev libbz2-dev gettext \
             libjpeg-dev libpng-dev uuid-dev libsqlite3-dev
 
-      - name: Install Buildozer and Cython
+      - name: Install Buildozer and Fixed Cython
         run: |
           pip install --upgrade pip
-          pip install "Cython<3.0" buildozer wheel
+          # Используем Cython 0.29.33 — это критически важно!
+          pip install "Cython==0.29.33" buildozer wheel
 
       - name: Build with Buildozer
         run: |
-          # ВАЖНО: Мы НЕ удаляем .buildozer, чтобы использовать кэш
+          # Если билд упал, мы не чистим всё, а позволяем Buildozer восстановиться
           buildozer -v android debug
         env:
           APP_ANDROID_ACCEPT_SDK_LICENSE: "1"
