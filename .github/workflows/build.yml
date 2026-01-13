@@ -1,4 +1,4 @@
-name: Build
+name: Build APK
 on:
   push:
     branches: [ main ]
@@ -6,27 +6,18 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+
+      - name: Build with Buildozer Docker
+        uses: undercover-llc/buildozer-action@master
         with:
-          python-version: '3.11'
+          command: buildozer android debug
+          repository_root: .
 
-      - name: Install dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y build-essential git python3-dev zip unzip openjdk-17-jdk ffmpeg libsdl2-dev libssl-dev
-          pip install --upgrade pip
-          pip install "Cython<3.0" buildozer  # Критически важная версия
-
-      - name: Build with Buildozer
-        run: |
-          # Очистка кэша перед сборкой, чтобы убрать старые ошибки
-          rm -rf .buildozer
-          yes | buildozer -v android debug
-
-      - uses: actions/upload-artifact@v4
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
         with:
           name: CanterPro-APK
           path: bin/*.apk
