@@ -16,27 +16,4 @@ jobs:
           java-version: '17'
 
       - name: Set up Python 3.10
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.10'
-
-      - name: Install Tools
-        run: |
-          # Установка только необходимых библиотек без полного апдейта системы
-          sudo apt-get install -y build-essential git libsdl2-dev libssl-dev
-          pip install --upgrade pip
-          pip install "Cython>=3.0.0" buildozer wheel
-
-      - name: Build with Buildozer
-        run: |
-          # Полная очистка, чтобы разорвать круг старых ошибок
-          buildozer android clean
-          buildozer -v android debug
-        env:
-          APP_ANDROID_ACCEPT_SDK_LICENSE: "1"
-
-      - name: Upload APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: CanterPro-Android15-v1.7
-          path: bin/*.apk
+        uses: actions/setup-python@v
