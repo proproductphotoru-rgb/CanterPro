@@ -28,17 +28,15 @@ jobs:
             autoconf automake libtool pkg-config zlib1g-dev libncurses5-dev \
             libncursesw5-dev libtinfo5 cmake libffi-dev libbz2-dev gettext
 
-      - name: Install Python Dependencies
+      - name: Install Buildozer and Cython
         run: |
           pip install --upgrade pip
-          # Устанавливаем Cython 3.0+, так как Kivy 2.3.0 в buildozer.spec его требует
-          pip install "Cython>=3.0" buildozer wheel
+          pip install Cython buildozer wheel
 
       - name: Build with Buildozer
         run: |
-          # Очистка на всякий случай перед сборкой
+          # Полная очистка перед сборкой
           buildozer android clean
-          # Сборка в режиме debug с подробным логом
           buildozer -v android debug
         env:
           APP_ANDROID_ACCEPT_SDK_LICENSE: "1"
@@ -46,5 +44,5 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: package
+          name: CanterPro-Package
           path: bin/*.apk
