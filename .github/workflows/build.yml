@@ -37,14 +37,13 @@ jobs:
 
       - name: Build with Buildozer
         run: |
-          # ВАЖНО: Удаляем старый проблемный кэш перед сборкой для Android 15
-          rm -rf .buildozer
-          buildozer android debug
+          # После удаления кэша вручную, просто запускаем билд
+          buildozer -v android debug
         env:
           APP_ANDROID_ACCEPT_SDK_LICENSE: "1"
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: CanterPro-v1.3
+          name: CanterPro-Android15-v1.4
           path: bin/*.apk
