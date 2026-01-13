@@ -4,26 +4,21 @@ package.name = canterpro
 package.domain = org.canter
 source.dir = .
 source.include_exts = py,png,jpg,kv,atlas,xlsx
-version = 1.6
+version = 1.7
 
-# Фиксация Cython предотвращает ошибки компиляции на сервере
-requirements = python3,kivy==2.3.0,kivymd==1.2.0,pillow,openpyxl,android,et_xmlfile,certifi,cython==0.29.33
+# Использование Cython 3.0.0 обязательно для Android 15 и NDK 26
+requirements = python3,kivy==2.3.0,kivymd==1.2.0,pillow,openpyxl,android,certifi,cython>=3.0.0
 
 orientation = portrait
 fullscreen = 0
 
-# Настройки стабильности для Android 14/15
 android.archs = arm64-v8a
-android.api = 34
+android.api = 35
 android.minapi = 24
-android.ndk = 25b
+android.ndk = 26b
 android.accept_sdk_license = True
 android.enable_androidx = True
-p4a.branch = master
+# Используем ветку develop, так как в ней исправлены баги API 35
+p4a.branch = develop
 
-# Права доступа (в Android 15 это минимум)
-android.permissions = INTERNET, READ_EXTERNAL_STORAGE, WRITE_EXTERNAL_STORAGE
-
-[buildozer]
-log_level = 2
-warn_on_root = 1
+android.permissions = INTERNET
