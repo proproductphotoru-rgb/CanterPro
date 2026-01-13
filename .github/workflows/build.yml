@@ -1,40 +1,43 @@
-name: Build Android APK
+name: Build Android APK (Android 15)
+
 on:
   push:
     branches: [ main ]
+  workflow_dispatch:
 
 jobs:
   build:
     runs-on: ubuntu-22.04
+
     steps:
-      - name: Checkout Code
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Set up JDK 17
+      - name: Set up Java 17
         uses: actions/setup-java@v4
         with:
-          distribution: 'temurin'
+          distribution: temurin
           java-version: '17'
 
-      - name: Set up Python 3.10
-        uses: actions/setup-python@v5 # ТЕПЕРЬ СТОИТ V5, ЭТО ИСПРАВЛЯЕТ ОШИБКУ ИЗ ЛОГА
-        with:
-          python-version: '3.10'
+      - name: Install system dependencies
+        run: |
+          sudo apt update
+          sudo apt install -y \
+            zip unzip git \
+            python3-pip \
+            openjdk-17-jdk
 
-      - name: Install Buildozer and Cython
+      - name: Install Buildozer
         run: |
           pip install --upgrade pip
-          pip install "Cython>=3.0.0" buildozer wheel
+          pip install --upgrade buildozer cython
 
-      - name: Build with Buildozer
+      - name: Build APK
         run: |
-          # Прямая сборка без команды clean, которая вызывала FileNotFoundError
-          buildozer -v android debug
-        env:
-          APP_ANDROID_ACCEPT_SDK_LICENSE: "1"
+          buildozer android debug
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: CanterPro-Android-15
+          name: CanterPro-Android15
           path: bin/*.apk
