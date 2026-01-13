@@ -11,8 +11,8 @@ from kivy.utils import platform
 import webbrowser, re, datetime, os
 from openpyxl import Workbook, load_workbook
 
-AMORT = 10  # 10 руб/км
-TAX = 0.06  # 6% налог
+AMORT = 10
+TAX = 0.06
 
 KV = '''
 MDScreen:
@@ -35,9 +35,9 @@ MDScreen:
                     spacing: dp(10)
                     radius: [15,]
                     adaptive_height: True
-                    MDLabel: text: "🗺 Маршрут"; font_style: "H6"
-                    MDTextField: id: route_from; hint_text: "Откуда (Адрес/Координаты)"; mode: "outline"
-                    MDTextField: id: route_to; hint_text: "Куда (Адрес/Координаты)"; mode: "outline"
+                    MDLabel: text: "🗺 Навигация"; font_style: "H6"
+                    MDTextField: id: route_from; hint_text: "Откуда (Адрес/Координаты)"
+                    MDTextField: id: route_to; hint_text: "Куда (Адрес/Координаты)"
                     MDRaisedButton:
                         text: "ОТКРЫТЬ НАВИГАТОР"
                         pos_hint: {"center_x": .5}
@@ -88,30 +88,21 @@ class CanterApp(MDApp):
         try:
             d, r = float(self.root.ids.dist.text), float(self.root.ids.rate.text)
             l, p = float(self.root.ids.f_l.text), float(self.root.ids.f_p.text)
-            
-            income = d * r if r < 1000 else r
+            inc = d * r if r < 1000 else r
             fuel = l * p
             am = d * AMORT
-            tx = income * TAX
-            prof = income - fuel - am - tx
-            
+            tx = inc * TAX
+            prof = inc - fuel - am - tx
             self.root.ids.rep_text.text = (
-                f"📋 ДЕТАЛЬНЫЙ ОТЧЕТ\n━━━━━━━━━━━━━━\n"
-                f"🛣 Пробег: {d} км\n"
-                f"💰 Грязными: {income:,.0f} ₽\n"
-                f"⛽ Топливо: -{fuel:,.0f} ₽\n"
-                f"🔧 Амортизация: -{am:,.0f} ₽\n"
-                f"🏛 Налог (6%): -{tx:,.0f} ₽\n"
-                f"━━━━━━━━━━━━━━\n"
-                f"🏆 ЧИСТАЯ ПРИБЫЛЬ: {prof:,.0f} ₽\n"
-                f"📈 Расход: {(l/d*100):.1f} л/100"
+                f"📋 ОТЧЕТ\n━━━━━━━━━━━━━━\n🛣 Пробег: {d} км\n💰 Доход: {inc:,.0f} ₽\n"
+                f"⛽ Топливо: -{fuel:,.0f} ₽\n🔧 Аморт: -{am:,.0f} ₽\n🏛 Налог: -{tx:,.0f} ₽\n"
+                f"━━━━━━━━━━━━━━\n🏆 ПРИБЫЛЬ: {prof:,.0f} ₽\n📈 Расход: {(l/d*100):.1f} л/100"
             )
             self.root.ids.rep_card.opacity = 1
-            self.save_data(d, income, prof)
-        except:
-            self.root.ids.rep_text.text = "Ошибка данных!"
+            self.save(d, inc, prof)
+        except: self.root.ids.rep_text.text = "Ошибка данных"
 
-    def save_data(self, d, inc, pr):
+    def save(self, d, inc, pr):
         fn = "Canter_Log.xlsx"
         if not os.path.exists(fn):
             wb = Workbook(); ws = wb.active
