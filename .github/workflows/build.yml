@@ -12,11 +12,11 @@ jobs:
 
       - name: Build with Buildozer Container
         run: |
-          # Запуск сборки в официальном контейнере buildozer
+          # Мы добавляем 'yes y |' перед командой, чтобы автоматически отвечать "да" на все вопросы
           docker run --volume "$(pwd)":/home/user/hostpath \
             --env BUILDOZER_WARN_ON_ROOT=0 \
             kivy/buildozer:latest \
-            android debug
+            sh -c "yes y | buildozer android debug"
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
