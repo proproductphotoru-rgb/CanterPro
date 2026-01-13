@@ -6,13 +6,13 @@ source.dir = .
 source.include_exts = py,png,jpg,kv,atlas,xlsx
 version = 1.0
 
-# Внимательно проверьте зависимости
+# Список зависимостей
 requirements = python3,kivy==2.3.0,kivymd==1.2.0,pillow,openpyxl,android,et_xmlfile
 
 orientation = portrait
 fullscreen = 0
 
-# Настройки для Google Play и современных телефонов
+# Настройки для современных Android
 android.archs = arm64-v8a
 android.api = 34
 android.minapi = 24
