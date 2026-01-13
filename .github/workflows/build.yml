@@ -29,18 +29,20 @@ jobs:
             libncursesw5-dev libtinfo5 cmake libffi-dev libbz2-dev gettext \
             libjpeg-dev libpng-dev
 
-      - name: Install Buildozer, Cython and P4A
+      - name: Install Buildozer and Cython
         run: |
           pip install --upgrade pip
-          pip install "Cython<3.0" buildozer wheel python-for-android
+          # ФИКСИРОВАННАЯ ВЕРСИЯ ДЛЯ СТАБИЛЬНОСТИ
+          pip install "Cython==0.29.33" buildozer wheel python-for-android
 
       - name: Build with Buildozer
         run: |
-          # Указываем путь к p4a явно, чтобы избежать FileNotFoundError
-          export P4A_PATH=$(which p4a)
+          # Принудительная очистка и запуск
+          buildozer android clean
           buildozer -v android debug
         env:
           APP_ANDROID_ACCEPT_SDK_LICENSE: "1"
+          P4A_PATH: /home/runner/.local/bin/python-for-android
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
