@@ -23,6 +23,7 @@ MDScreen:
         MDTopAppBar:
             title: "CanterPro Ultra"
             elevation: 4
+            md_bg_color: 0.1, 0.1, 0.2, 1
         MDScrollView:
             MDBoxLayout:
                 orientation: 'vertical'
@@ -77,7 +78,7 @@ MDScreen:
 
                 MDRaisedButton:
                     text: "РАССЧИТАТЬ И СОХРАНИТЬ"
-                    md_bg_color: "green"
+                    md_bg_color: 0.1, 0.4, 0.1, 1
                     size_hint_x: 1
                     on_release: app.do_calc()
 
@@ -117,8 +118,8 @@ class CanterApp(MDApp):
             am = d * AMORT
             tx = inc * TAX
             prof = inc - fuel - am - tx
-            res = (f"📋 ОТЧЕТ\n🛣 КМ: {d}\n💰 Доход: {inc:,.0f}\n⛽ Топливо: -{fuel:,.0f}\n"
-                   f"🔧 Аморт: -{am:,.0f}\n🏛 Налог: -{tx:,.0f}\n🏆 ПРИБЫЛЬ: {prof:,.0f} ₽")
+            res = (f"📋 ОТЧЕТ\n━━━━━━━━━━━━━━\n🛣 КМ: {d}\n💰 Доход: {inc:,.0f} ₽\n⛽ Топливо: -{fuel:,.0f} ₽\n"
+                   f"🔧 Аморт: -{am:,.0f} ₽\n🏛 Налог: -{tx:,.0f} ₽\n━━━━━━━━━━━━━━\n🏆 ПРИБЫЛЬ: {prof:,.0f} ₽")
             self.root.ids.rep_text.text = res
             self.root.ids.rep_card.opacity = 1
             self.save(d, inc, prof)
