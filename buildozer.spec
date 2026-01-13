@@ -1,26 +1,26 @@
 [app]
+
 title = CanterPro
 package.name = canterpro
 package.domain = org.canter
+
 source.dir = .
-source.include_exts = py,png,jpg,kv,atlas,xlsx
-version = 1.7.1
+source.include_exts = py,kv,png,jpg,ttf
 
-requirements = python3,kivy==2.3.0,kivymd==1.2.0,pillow,openpyxl,android,certifi,cython>=3.0.0
+requirements = python3,kivy,kivymd,openpyxl
 
-orientation = portrait
-fullscreen = 0
+version = 1.7
 
-android.archs = arm64-v8a
 android.api = 34
-android.minapi = 24
-android.ndk = 25b
-android.accept_sdk_license = True
-android.enable_androidx = True
-p4a.branch = master
+android.minapi = 26
+android.ndk = 26b
+android.sdk = 34
+android.archs = arm64-v8a
 
-android.permissions = INTERNET
+android.permissions = INTERNET,READ_EXTERNAL_STORAGE,WRITE_EXTERNAL_STORAGE
+android.allow_backup = False
 
-[buildozer]
+fullscreen = 0
+orientation = portrait
+
 log_level = 2
-warn_on_root = 1
