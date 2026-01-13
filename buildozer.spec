@@ -1,50 +1,31 @@
-name: Build APK
-on:
-  push:
-    branches: [ main ]
-  workflow_dispatch:
+[app]
+title = CanterPro
+package.name = canterpro
+package.domain = org.canter
+source.dir = .
+source.include_exts = py,png,jpg,kv,atlas,xlsx
+version = 1.0
 
-jobs:
-  build:
-    runs-on: ubuntu-22.04
-    steps:
-      - uses: actions/checkout@v4
+# Требования
+requirements = python3,kivy==2.3.0,kivymd==1.2.0,pillow,openpyxl,android,et_xmlfile
 
-      - name: Set up JDK 17
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'temurin'
-          java-version: '17'
+# Разрешения
+android.permissions = INTERNET, WRITE_EXTERNAL_STORAGE, READ_EXTERNAL_STORAGE
 
-      - name: Set up Python 3.10
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.10'
+# Интеграция с навигатором (Intent Filter)
+android.manifest.intent_filters = [ {"action": "android.intent.action.SEND", "category": "android.intent.category.DEFAULT", "data": {"mimeType": "text/plain"}} ]
 
-      # ИСПРАВЛЕНО: Убраны конфликтные библиотеки (ffmpeg, gstreamer, sdl2).
-      # Оставлены только инструменты для компиляции.
-      - name: Install Build Tools
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y \
-            build-essential git python3-dev \
-            libssl-dev libffi-dev \
-            zip unzip autoconf libtool pkg-config cmake \
-            zlib1g-dev gettext
+# Настройки Android
+orientation = portrait
+fullscreen = 0
+android.archs = arm64-v8a
+android.api = 34
+android.minapi = 24
+android.ndk = 25b
+android.accept_sdk_license = True
+# Используем ветку master для поддержки Kivy 2.3.0 + Cython 3
+p4a.branch = master
 
-      - name: Install Buildozer & Cython
-        run: |
-          pip install --upgrade pip
-          pip install "Cython<3.0"
-          pip install buildozer
-
-      # yes | ... отвечает "y" на все вопросы установщика Android SDK
-      - name: Build with Buildozer
-        run: |
-          yes | buildozer android debug
-
-      - name: Upload APK
-        uses: actions/upload-artifact@v4
-        with:
-          name: CanterPro-APK
-          path: bin/*.apk
+[buildozer]
+log_level = 2
+warn_on_root = 1
