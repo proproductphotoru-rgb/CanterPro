@@ -1,22 +1,20 @@
-from kivymd.app import MDApp
-from kivymd.uix.screen import MDScreen
-from kivymd.uix.boxlayout import MDBoxLayout
-from kivymd.uix.button import MDRaisedButton
-from kivymd.uix.textfield import MDTextField
-from kivymd.uix.label import MDLabel
-from kivymd.uix.scrollview import MDScrollView
-from kivymd.uix.card import MDCard
+import os
+import datetime
+import webbrowser
 from kivy.lang import Builder
 from kivy.utils import platform
-import webbrowser, re, datetime, os
+from kivymd.app import MDApp
 from openpyxl import Workbook, load_workbook
 
-# Функция для безопасного пути к файлу на Android 15
+# --- НАСТРОЙКА ПУТЕЙ (Критично для Android 15) ---
 def get_report_path():
     filename = "reports.xlsx"
     if platform == 'android':
-        from android.storage import app_storage_path
-        return os.path.join(app_storage_path(), filename)
+        try:
+            from android.storage import app_storage_path
+            return os.path.join(app_storage_path(), filename)
+        except ImportError:
+            return filename
     return filename
 
 REPORT_PATH = get_report_path()
@@ -76,15 +74,19 @@ class CanterPro(MDApp):
         return Builder.load_string(KV)
 
     def open_navi(self):
-        f, t = self.root.ids.route_from.text, self.root.ids.route_to.text
-        if f and t: webbrowser.open(f"yandexnavi://build_route_on_map?text_from={f}&text_to={t}")
+        f = self.root.ids.route_from.text
+        t = self.root.ids.route_to.text
+        if f and t:
+            url = f"yandexnavi://build_route_on_map?text_from={f}&text_to={t}"
+            webbrowser.open(url)
 
     def do_calc(self):
         try:
-            d = float(self.root.ids.dist.text)
-            r = float(self.root.ids.rate.text)
-            l = float(self.root.ids.f_l.text)
-            p = float(self.root.ids.f_p.text)
+            d = float(self.root.ids.dist.text or 0)
+            r = float(self.root.ids.rate.text or 0)
+            l = float(self.root.ids.f_l.text or 0)
+            p = float(self.root.ids.f_p.text or 0)
+            
             inc = d * r if r < 1000 else r
             fuel = l * p
             am = d * AMORT
@@ -92,25 +94,33 @@ class CanterPro(MDApp):
             prof = inc - fuel - am - tx
             
             report = (
-                f"📋 ОТЧЕТ\\n━━━━━━━━━━━━━━\\n🛣 Пробег: {d} км\\n💰 Доход: {inc:,.0f} ₽\\n"
-                f"⛽ Топливо: -{fuel:,.0f} ₽\\n🔧 Аморт: -{am:,.0f} ₽\\n🏛 Налог: -{tx:,.0f} ₽\\n"
-                f"━━━━━━━━━━━━━━\\n🏆 ПРИБЫЛЬ: {prof:,.0f} ₽\\n📈 Расход: {(l/d*100):.1f} л/100"
+                f"📋 ОТЧЕТ\\n"
+                f"🛣 Пробег: {d} км\\n"
+                f"💰 Доход: {inc:,.0f} ₽\\n"
+                f"⛽ Топливо: -{fuel:,.0f} ₽\\n"
+                f"🔧 Аморт: -{am:,.0f} ₽\\n"
+                f"🏛 Налог: -{tx:,.0f} ₽\\n"
+                f"🏆 ПРИБЫЛЬ: {prof:,.0f} ₽"
             )
             self.root.ids.rep_text.text = report.replace('\\n', '\n')
             self.save_data(d, inc, fuel, am, tx, prof)
         except Exception as e:
-            self.root.ids.rep_text.text = f"Ошибка: {str(e)}"
+            self.root.ids.rep_text.text = f"Ошибка данных: {str(e)}"
 
     def save_data(self, d, inc, fuel, am, tx, prof):
-        if not os.path.exists(REPORT_PATH):
-            wb = Workbook()
-            ws = wb.active
-            ws.append(["Дата", "Пробег", "Доход", "Топливо", "Амортизация", "Налог", "Прибыль"])
-        else:
-            wb = load_workbook(REPORT_PATH)
-            ws = wb.active
-        ws.append([datetime.datetime.now().strftime("%d.%m.%Y"), d, inc, fuel, am, tx, prof])
-        wb.save(REPORT_PATH)
+        try:
+            if not os.path.exists(REPORT_PATH):
+                wb = Workbook()
+                ws = wb.active
+                ws.append(["Дата", "Пробег", "Доход", "Топливо", "Амортизация", "Налог", "Прибыль"])
+            else:
+                wb = load_workbook(REPORT_PATH)
+                ws = wb.active
+            
+            ws.append([datetime.datetime.now().strftime("%d.%m.%Y"), d, inc, fuel, am, tx, prof])
+            wb.save(REPORT_PATH)
+        except Exception as e:
+            print(f"Ошибка сохранения: {e}")
 
 if __name__ == "__main__":
     CanterPro().run()
