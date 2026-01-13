@@ -11,12 +11,11 @@ from kivy.utils import platform
 import webbrowser, re, datetime, os
 from openpyxl import Workbook, load_workbook
 
-# --- ИСПРАВЛЕНИЕ ПУТЕЙ ДЛЯ ANDROID 15 ---
+# Функция для безопасного пути к файлу на Android 15
 def get_report_path():
     filename = "reports.xlsx"
     if platform == 'android':
         from android.storage import app_storage_path
-        # Храним во внутреннем хранилище приложения, чтобы не было ошибок доступа
         return os.path.join(app_storage_path(), filename)
     return filename
 
@@ -68,7 +67,6 @@ MDScreen:
                     padding: dp(16)
                     radius: [15,]
                     adaptive_height: True
-                    md_bg_color: 1, 1, 1, 1
                     MDLabel: id: rep_text; text: "Здесь будет отчет"; halign: "center"; theme_text_color: "Secondary"
 '''
 
@@ -87,7 +85,6 @@ class CanterPro(MDApp):
             r = float(self.root.ids.rate.text)
             l = float(self.root.ids.f_l.text)
             p = float(self.root.ids.f_p.text)
-            
             inc = d * r if r < 1000 else r
             fuel = l * p
             am = d * AMORT
@@ -102,10 +99,9 @@ class CanterPro(MDApp):
             self.root.ids.rep_text.text = report.replace('\\n', '\n')
             self.save_data(d, inc, fuel, am, tx, prof)
         except Exception as e:
-            self.root.ids.rep_text.text = f"Ошибка ввода: {str(e)}"
+            self.root.ids.rep_text.text = f"Ошибка: {str(e)}"
 
     def save_data(self, d, inc, fuel, am, tx, prof):
-        # Используем REPORT_PATH вместо "reports.xlsx"
         if not os.path.exists(REPORT_PATH):
             wb = Workbook()
             ws = wb.active
@@ -113,7 +109,6 @@ class CanterPro(MDApp):
         else:
             wb = load_workbook(REPORT_PATH)
             ws = wb.active
-        
         ws.append([datetime.datetime.now().strftime("%d.%m.%Y"), d, inc, fuel, am, tx, prof])
         wb.save(REPORT_PATH)
 
