@@ -11,9 +11,8 @@ from kivy.utils import platform
 import webbrowser, re, datetime, os
 from openpyxl import Workbook, load_workbook
 
-# Настройки Canter
-AMORT = 10
-TAX = 0.06
+AMORT = 10  # 10 руб/км
+TAX = 0.06  # 6% налог
 
 KV = '''
 MDScreen:
@@ -22,7 +21,6 @@ MDScreen:
         md_bg_color: 0.95, 0.95, 0.95, 1
         MDTopAppBar:
             title: "CanterPro Ultra"
-            elevation: 4
             md_bg_color: 0.1, 0.1, 0.2, 1
         MDScrollView:
             MDBoxLayout:
@@ -36,17 +34,10 @@ MDScreen:
                     padding: dp(16)
                     spacing: dp(10)
                     radius: [15,]
-                    elevation: 2
                     adaptive_height: True
-                    MDLabel:
-                        text: "🗺 Навигация"
-                        font_style: "H6"
-                    MDTextField:
-                        id: route_from
-                        hint_text: "Откуда (Адрес/Координаты)"
-                    MDTextField:
-                        id: route_to
-                        hint_text: "Куда (Адрес/Координаты)"
+                    MDLabel: text: "🗺 Маршрут"; font_style: "H6"
+                    MDTextField: id: route_from; hint_text: "Откуда (Адрес/Координаты)"; mode: "outline"
+                    MDTextField: id: route_to; hint_text: "Куда (Адрес/Координаты)"; mode: "outline"
                     MDRaisedButton:
                         text: "ОТКРЫТЬ НАВИГАТОР"
                         pos_hint: {"center_x": .5}
@@ -57,28 +48,15 @@ MDScreen:
                     padding: dp(16)
                     spacing: dp(10)
                     radius: [15,]
-                    elevation: 2
                     adaptive_height: True
-                    MDTextField:
-                        id: dist
-                        hint_text: "Дистанция (км)"
-                        input_filter: "float"
-                    MDTextField:
-                        id: rate
-                        hint_text: "Ставка (₽)"
-                        input_filter: "float"
-                    MDTextField:
-                        id: f_l
-                        hint_text: "Литров потрачено"
-                        input_filter: "float"
-                    MDTextField:
-                        id: f_p
-                        hint_text: "Цена за литр (₽)"
-                        input_filter: "float"
+                    MDTextField: id: dist; hint_text: "Дистанция (км)"; input_filter: "float"
+                    MDTextField: id: rate; hint_text: "Ставка (₽)"; input_filter: "float"
+                    MDTextField: id: f_l; hint_text: "Литров факт"; input_filter: "float"
+                    MDTextField: id: f_p; hint_text: "Цена ДТ (₽)"; input_filter: "float"
 
                 MDRaisedButton:
-                    text: "РАССЧИТАТЬ И СОХРАНИТЬ"
-                    md_bg_color: 0.1, 0.4, 0.1, 1
+                    text: "РАССЧИТАТЬ ПОДРОБНО"
+                    md_bg_color: 0.1, 0.5, 0.1, 1
                     size_hint_x: 1
                     on_release: app.do_calc()
 
@@ -88,10 +66,7 @@ MDScreen:
                     radius: [15,]
                     adaptive_height: True
                     opacity: 0
-                    MDLabel:
-                        id: rep_text
-                        text: ""
-                        font_style: "Body2"
+                    MDLabel: id: rep_text; text: ""; font_style: "Body2"
 '''
 
 class CanterApp(MDApp):
@@ -113,23 +88,36 @@ class CanterApp(MDApp):
         try:
             d, r = float(self.root.ids.dist.text), float(self.root.ids.rate.text)
             l, p = float(self.root.ids.f_l.text), float(self.root.ids.f_p.text)
-            inc = d * r if r < 1000 else r
+            
+            income = d * r if r < 1000 else r
             fuel = l * p
             am = d * AMORT
-            tx = inc * TAX
-            prof = inc - fuel - am - tx
-            res = (f"📋 ОТЧЕТ\n━━━━━━━━━━━━━━\n🛣 КМ: {d}\n💰 Доход: {inc:,.0f} ₽\n⛽ Топливо: -{fuel:,.0f} ₽\n"
-                   f"🔧 Аморт: -{am:,.0f} ₽\n🏛 Налог: -{tx:,.0f} ₽\n━━━━━━━━━━━━━━\n🏆 ПРИБЫЛЬ: {prof:,.0f} ₽")
-            self.root.ids.rep_text.text = res
+            tx = income * TAX
+            prof = income - fuel - am - tx
+            
+            self.root.ids.rep_text.text = (
+                f"📋 ДЕТАЛЬНЫЙ ОТЧЕТ\n━━━━━━━━━━━━━━\n"
+                f"🛣 Пробег: {d} км\n"
+                f"💰 Грязными: {income:,.0f} ₽\n"
+                f"⛽ Топливо: -{fuel:,.0f} ₽\n"
+                f"🔧 Амортизация: -{am:,.0f} ₽\n"
+                f"🏛 Налог (6%): -{tx:,.0f} ₽\n"
+                f"━━━━━━━━━━━━━━\n"
+                f"🏆 ЧИСТАЯ ПРИБЫЛЬ: {prof:,.0f} ₽\n"
+                f"📈 Расход: {(l/d*100):.1f} л/100"
+            )
             self.root.ids.rep_card.opacity = 1
-            self.save(d, inc, prof)
-        except: self.root.ids.rep_text.text = "Ошибка данных"
+            self.save_data(d, income, prof)
+        except:
+            self.root.ids.rep_text.text = "Ошибка данных!"
 
-    def save(self, d, inc, pr):
+    def save_data(self, d, inc, pr):
         fn = "Canter_Log.xlsx"
-        wb = load_workbook(fn) if os.path.exists(fn) else Workbook()
-        ws = wb.active
-        if not os.path.exists(fn): ws.append(["Дата", "КМ", "Доход", "Прибыль"])
+        if not os.path.exists(fn):
+            wb = Workbook(); ws = wb.active
+            ws.append(["Дата", "КМ", "Доход", "Прибыль"])
+        else:
+            wb = load_workbook(fn); ws = wb.active
         ws.append([datetime.datetime.now().strftime("%d.%m.%Y"), d, inc, pr])
         wb.save(fn)
 
