@@ -27,24 +27,24 @@ jobs:
             build-essential git python3-dev ffmpeg libsdl2-dev libssl-dev \
             autoconf automake libtool pkg-config zlib1g-dev libncurses5-dev \
             libncursesw5-dev libtinfo5 cmake libffi-dev libbz2-dev gettext \
-            libjpeg-dev libpng-dev uuid-dev libsqlite3-dev
+            libjpeg-dev libpng-dev uuid-dev libsqlite3-dev \
+            libxml2-dev libxslt1-dev
 
-      - name: Install Buildozer and Fixed Cython
+      - name: Install Buildozer and Cython
         run: |
           pip install --upgrade pip
-          # На Android 15 Cython 3.0.0+ работает стабильнее
           pip install "Cython>=3.0.0" buildozer wheel
 
       - name: Build with Buildozer
         run: |
-          # Очистка важна для пересборки путей
-          buildozer android clean
-          buildozer -v android debug
+          # ВАЖНО: Удаляем старый проблемный кэш перед сборкой для Android 15
+          rm -rf .buildozer
+          buildozer android debug
         env:
           APP_ANDROID_ACCEPT_SDK_LICENSE: "1"
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: CanterPro-Android15-Final
+          name: CanterPro-v1.3
           path: bin/*.apk
