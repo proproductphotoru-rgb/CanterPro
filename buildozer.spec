@@ -6,20 +6,20 @@ source.dir = .
 source.include_exts = py,png,jpg,kv,atlas,xlsx
 version = 1.0
 
-# Используем стабильную версию Kivy 2.2.1
+# Список зависимостей (Kivy 2.2.1 + Cython 0.29.x - идеальная пара)
 requirements = python3,kivy==2.2.1,kivymd==1.2.0,pillow,openpyxl,android,et_xmlfile
 
 orientation = portrait
 fullscreen = 0
 
-# Настройки для Android 13/14
+# Настройки для современных Android (API 33/34)
 android.archs = arm64-v8a
 android.api = 33
 android.minapi = 24
 android.ndk = 25b
 android.accept_sdk_license = True
 
-# Используем стандартную ветку master
+# Используем основную стабильную ветку
 p4a.branch = master
 
 android.permissions = INTERNET, WRITE_EXTERNAL_STORAGE, READ_EXTERNAL_STORAGE
