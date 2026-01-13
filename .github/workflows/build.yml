@@ -6,22 +6,31 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
 
-      - name: Build with Buildozer Container
+      - name: Set up Python 3.10
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Install System Dependencies
         run: |
-          # Создаем папку для кэша, чтобы ускорить следующие сборки
-          mkdir -p .buildozer
+          sudo apt-get update
+          sudo apt-get install -y build-essential git python3-dev zip unzip openjdk-17-jdk ffmpeg libsdl2-dev libssl-dev autoconf automake libtool pkg-config zlib1g-dev libncurses5-dev libncursesw5-dev libtinfo5 cmake libffi-dev libbz2-dev
           
-          # Запускаем сборку от имени текущего пользователя системы (runner)
-          # Это обходит проверку на root полностью
-          docker run --user "$(id -u):$(id -g)" \
-            --volume "$(pwd)":/home/user/hostpath \
-            --env BUILDOZER_WARN_ON_ROOT=0 \
-            kivy/buildozer:latest \
-            buildozer android debug
+      - name: Install Python Dependencies
+        run: |
+          pip install --upgrade pip
+          pip install "Cython<3.0" wheel  # Строго версия ниже 3.0
+          pip install buildozer
+
+      - name: Build with Buildozer
+        run: |
+          # Очистка и запуск сборки
+          rm -rf .buildozer
+          buildozer android debug
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
