@@ -32,13 +32,13 @@ jobs:
       - name: Install Buildozer and Cython
         run: |
           pip install --upgrade pip
+          # Фиксируем версию Cython для предотвращения ошибок компиляции Kivy
           pip install "Cython==0.29.33" buildozer wheel python-for-android
 
       - name: Build with Buildozer
         run: |
-          # Вместо 'buildozer android clean' чистим папку вручную, чтобы не было FileNotFoundError
+          # Ручная очистка, чтобы не падать на ошибке 'No such file or directory'
           rm -rf .buildozer
-          # Запускаем сборку
           buildozer -v android debug
         env:
           APP_ANDROID_ACCEPT_SDK_LICENSE: "1"
