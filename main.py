@@ -1,6 +1,5 @@
 from kivymd.app import MDApp
-from kivymd.uix.boxlayout import MDBoxLayout
-from kivymd.uix.button import MDRaisedButton, MDFlatButton
+from kivymd.uix.button import MDRaisedButton
 from kivymd.uix.textfield import MDTextField
 from kivymd.uix.label import MDLabel
 from kivymd.uix.scrollview import MDScrollView
@@ -10,7 +9,7 @@ from kivymd.uix.toolbar import MDTopAppBar
 from kivy.lang import Builder
 from kivy.core.clipboard import Clipboard
 
-# ================= НАСТРОЙКИ =================
+# ====== НАСТРОЙКИ ======
 BASE_FUEL_100 = 12
 AMORT = 10
 TAX = 0.06
@@ -45,41 +44,39 @@ MDScreen:
         MDScrollView:
             MDBoxLayout:
                 orientation: 'vertical'
+                padding: dp(16)
+                spacing: dp(16)
                 adaptive_height: True
-                padding: dp(12)
-                spacing: dp(12)
 
                 MDCard:
-                    padding: dp(12)
+                    padding: dp(16)
+                    spacing: dp(12)
                     adaptive_height: True
-                    spacing: dp(8)
 
                     MDLabel:
-                        text: "💼 Тип ставки"
+                        text: "Тип ставки"
                         bold: True
 
-                    MDBoxLayout:
-                        spacing: dp(8)
-                        adaptive_height: True
+                    MDRaisedButton:
+                        text: "Фикс"
+                        on_release: app.set_rate_type("fix")
 
-                        MDFlatButton:
-                            id: btn_fix
-                            text: "Фикс"
-                            on_release: app.set_rate_type("fix")
+                    MDRaisedButton:
+                        text: "₽ за км"
+                        on_release: app.set_rate_type("km")
 
-                        MDFlatButton:
-                            id: btn_km
-                            text: "₽/км"
-                            on_release: app.set_rate_type("km")
+                    MDRaisedButton:
+                        text: "Часовая"
+                        on_release: app.set_rate_type("hour")
 
-                        MDFlatButton:
-                            id: btn_hour
-                            text: "Часы"
-                            on_release: app.set_rate_type("hour")
+                MDCard:
+                    padding: dp(16)
+                    spacing: dp(12)
+                    adaptive_height: True
 
                     MDTextField:
                         id: rate
-                        hint_text: "Ставка (₽)"
+                        hint_text: "Ставка (₽ или ₽/км)"
                         input_filter: "float"
 
                     MDTextField:
@@ -103,25 +100,26 @@ MDScreen:
                         input_filter: "float"
 
                     MDBoxLayout:
+                        spacing: dp(10)
                         adaptive_height: True
-                        spacing: dp(8)
 
                         MDCheckbox:
                             id: refrig
 
                         MDLabel:
-                            text: "❄️ Рефрижератор"
+                            text: "Рефрижератор (+15%)"
 
                 MDRaisedButton:
                     text: "РАССЧИТАТЬ"
+                    md_bg_color: 0.1, 0.6, 0.2, 1
                     on_release: app.do_calc()
 
                 MDCard:
                     id: rep_card
-                    padding: dp(12)
+                    padding: dp(16)
+                    spacing: dp(10)
                     adaptive_height: True
                     opacity: 0
-                    spacing: dp(8)
 
                     MDLabel:
                         id: rep_text
@@ -129,7 +127,7 @@ MDScreen:
                         halign: "left"
 
                     MDRaisedButton:
-                        text: "📋 СКОПИРОВАТЬ ДЛЯ КЛИЕНТА"
+                        text: "Скопировать для клиента"
                         on_release: app.copy_report()
 '''
 
@@ -173,10 +171,6 @@ class CanterApp(MDApp):
             margin = (profit / income * 100) if income > 0 else 0
 
             self.root.ids.rep_text.text = (
-                f"🚛 РАСЧЁТ РЕЙСА\n\n"
-                f"Пробег: {d:.1f} км\n"
-                f"Тоннаж: {t:.1f} т\n"
-                f"Реф: {'Да' if refrig else 'Нет'}\n\n"
                 f"Доход: {income:,.0f} ₽\n"
                 f"Топливо: -{fuel_cost:,.0f} ₽\n"
                 f"Амортизация: -{amort:,.0f} ₽\n"
@@ -195,7 +189,7 @@ class CanterApp(MDApp):
     def copy_report(self):
         if self.client_report_text:
             Clipboard.copy(self.client_report_text)
-            self.root.ids.rep_text.text += "\n\n✅ Скопировано"
+            self.root.ids.rep_text.text += "\n\n✓ Скопировано"
 
 
 if __name__ == "__main__":
