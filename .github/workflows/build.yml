@@ -10,8 +10,6 @@ jobs:
     runs-on: ubuntu-22.04
 
     env:
-      ANDROID_SDK_ROOT: /home/runner/.buildozer/android/platform/android-sdk
-      ANDROID_HOME: /home/runner/.buildozer/android/platform/android-sdk
       APP_ANDROID_ACCEPT_SDK_LICENSE: 1
 
     steps:
@@ -36,10 +34,6 @@ jobs:
         run: |
           pip install --upgrade pip
           pip install --upgrade buildozer cython
-
-      - name: Accept Android SDK licenses
-        run: |
-          yes | sdkmanager --licenses || true
 
       - name: Build APK
         run: |
