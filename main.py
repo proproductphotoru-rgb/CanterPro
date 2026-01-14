@@ -1,12 +1,11 @@
 from kivymd.app import MDApp
 from kivymd.uix.boxlayout import MDBoxLayout
-from kivymd.uix.button import MDRaisedButton
+from kivymd.uix.button import MDRaisedButton, MDFlatButton
 from kivymd.uix.textfield import MDTextField
 from kivymd.uix.label import MDLabel
 from kivymd.uix.scrollview import MDScrollView
 from kivymd.uix.card import MDCard
 from kivymd.uix.selectioncontrol import MDCheckbox
-from kivymd.uix.segmentedbutton import MDSegmentedButton, MDSegmentedButtonItem
 from kivymd.uix.toolbar import MDTopAppBar
 from kivy.lang import Builder
 from kivy.core.clipboard import Clipboard
@@ -18,7 +17,7 @@ TAX = 0.06
 HOUR_RATE = 1500
 REF_COEF = 1.15
 
-# ================= ВСПОМОГАТЕЛЬНЫЕ =================
+
 def tonnage_coef(t):
     if t <= 1:
         return 1.0
@@ -35,12 +34,10 @@ def fuel_per_100km(tonnage, refrig):
     return BASE_FUEL_100 * coef
 
 
-# ================= UI =================
 KV = '''
 MDScreen:
     MDBoxLayout:
         orientation: 'vertical'
-        padding: dp(10)
 
         MDTopAppBar:
             title: "CanterPro Ultra"
@@ -49,6 +46,7 @@ MDScreen:
             MDBoxLayout:
                 orientation: 'vertical'
                 adaptive_height: True
+                padding: dp(12)
                 spacing: dp(12)
 
                 MDCard:
@@ -60,19 +58,24 @@ MDScreen:
                         text: "💼 Тип ставки"
                         bold: True
 
-                    MDSegmentedButton:
-                        id: rate_type
+                    MDBoxLayout:
+                        spacing: dp(8)
+                        adaptive_height: True
 
-                        MDSegmentedButtonItem:
-                            id: rt_fix
+                        MDFlatButton:
+                            id: btn_fix
                             text: "Фикс"
-                            active: True   # ← ВАЖНО
+                            on_release: app.set_rate_type("fix")
 
-                        MDSegmentedButtonItem:
+                        MDFlatButton:
+                            id: btn_km
                             text: "₽/км"
+                            on_release: app.set_rate_type("km")
 
-                        MDSegmentedButtonItem:
+                        MDFlatButton:
+                            id: btn_hour
                             text: "Часы"
+                            on_release: app.set_rate_type("hour")
 
                     MDTextField:
                         id: rate
@@ -131,18 +134,18 @@ MDScreen:
 '''
 
 
-# ================= APP =================
 class CanterApp(MDApp):
+    rate_type = "fix"
     client_report_text = ""
 
     def build(self):
         return Builder.load_string(KV)
 
+    def set_rate_type(self, t):
+        self.rate_type = t
+
     def do_calc(self):
         try:
-            seg = self.root.ids.rate_type.active_segment
-            rate_type = seg.text if seg else "Фикс"   # ← ЗАЩИТА
-
             d = float(self.root.ids.dist.text or 0)
             r = float(self.root.ids.rate.text or 0)
             h = float(self.root.ids.hours.text or 0)
@@ -151,11 +154,11 @@ class CanterApp(MDApp):
             refrig = self.root.ids.refrig.active
 
             if d <= 0:
-                raise ValueError("Дистанция должна быть больше 0")
+                raise ValueError("Дистанция должна быть > 0")
 
-            if rate_type == "Фикс":
+            if self.rate_type == "fix":
                 income = r
-            elif rate_type == "₽/км":
+            elif self.rate_type == "km":
                 income = d * r
             else:
                 income = max(0, h - 1) * HOUR_RATE
