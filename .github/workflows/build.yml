@@ -28,12 +28,15 @@ jobs:
           sudo apt install -y \
             zip unzip git \
             python3-pip \
-            openjdk-17-jdk
+            openjdk-17-jdk \
+            libffi-dev \
+            libssl-dev
 
-      - name: Install Buildozer
+      - name: Install Buildozer (fixed)
         run: |
           pip install --upgrade pip
-          pip install --upgrade buildozer cython
+          pip install "cython<3"
+          pip install buildozer
 
       - name: Build APK
         run: |
