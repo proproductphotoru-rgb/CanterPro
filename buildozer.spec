@@ -24,3 +24,6 @@ fullscreen = 0
 orientation = portrait
 
 log_level = 2
+
+# 🔴 КРИТИЧНО для Android 15
+p4a.branch = develop
