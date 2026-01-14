@@ -1,5 +1,4 @@
 from kivymd.app import MDApp
-from kivymd.uix.screen import MDScreen
 from kivymd.uix.boxlayout import MDBoxLayout
 from kivymd.uix.button import MDRaisedButton
 from kivymd.uix.textfield import MDTextField
@@ -8,18 +7,15 @@ from kivymd.uix.scrollview import MDScrollView
 from kivymd.uix.card import MDCard
 from kivymd.uix.selectioncontrol import MDCheckbox
 from kivymd.uix.segmentedbutton import MDSegmentedButton, MDSegmentedButtonItem
+from kivymd.uix.toolbar import MDTopAppBar
 from kivy.lang import Builder
-from kivy.utils import platform
 from kivy.core.clipboard import Clipboard
-import webbrowser, re, datetime, os
-from openpyxl import Workbook, load_workbook
 
 # ================= НАСТРОЙКИ =================
-BASE_FUEL_100 = 12          # л / 100 км
-AMORT = 10                 # ₽ / км
-TAX = 0.06                 # 6%
-OIL_INTERVAL = 5000        # км
-HOUR_RATE = 1500           # ₽ / час
+BASE_FUEL_100 = 12
+AMORT = 10
+TAX = 0.06
+HOUR_RATE = 1500
 REF_COEF = 1.15
 
 # ================= ВСПОМОГАТЕЛЬНЫЕ =================
@@ -38,30 +34,27 @@ def fuel_per_100km(tonnage, refrig):
         coef *= REF_COEF
     return BASE_FUEL_100 * coef
 
+
 # ================= UI =================
 KV = '''
 MDScreen:
     MDBoxLayout:
         orientation: 'vertical'
-        md_bg_color: 0.95, 0.95, 0.95, 1
+        padding: dp(10)
 
         MDTopAppBar:
             title: "CanterPro Ultra"
-            md_bg_color: 0.1, 0.1, 0.2, 1
 
         MDScrollView:
             MDBoxLayout:
                 orientation: 'vertical'
-                padding: dp(16)
-                spacing: dp(15)
                 adaptive_height: True
+                spacing: dp(12)
 
                 MDCard:
-                    orientation: 'vertical'
-                    padding: dp(16)
-                    spacing: dp(10)
-                    radius: [15,]
+                    padding: dp(12)
                     adaptive_height: True
+                    spacing: dp(8)
 
                     MDLabel:
                         text: "💼 Тип ставки"
@@ -69,10 +62,15 @@ MDScreen:
 
                     MDSegmentedButton:
                         id: rate_type
+
                         MDSegmentedButtonItem:
+                            id: rt_fix
                             text: "Фикс"
+                            active: True   # ← ВАЖНО
+
                         MDSegmentedButtonItem:
                             text: "₽/км"
+
                         MDSegmentedButtonItem:
                             text: "Часы"
 
@@ -102,25 +100,25 @@ MDScreen:
                         input_filter: "float"
 
                     MDBoxLayout:
-                        spacing: dp(10)
                         adaptive_height: True
+                        spacing: dp(8)
+
                         MDCheckbox:
                             id: refrig
+
                         MDLabel:
                             text: "❄️ Рефрижератор"
 
                 MDRaisedButton:
                     text: "РАССЧИТАТЬ"
-                    md_bg_color: 0.1, 0.5, 0.1, 1
                     on_release: app.do_calc()
 
                 MDCard:
                     id: rep_card
-                    padding: dp(20)
-                    radius: [15,]
+                    padding: dp(12)
                     adaptive_height: True
                     opacity: 0
-                    spacing: dp(10)
+                    spacing: dp(8)
 
                     MDLabel:
                         id: rep_text
@@ -132,6 +130,7 @@ MDScreen:
                         on_release: app.copy_report()
 '''
 
+
 # ================= APP =================
 class CanterApp(MDApp):
     client_report_text = ""
@@ -141,7 +140,8 @@ class CanterApp(MDApp):
 
     def do_calc(self):
         try:
-            rt = self.root.ids.rate_type.active_segment.text
+            seg = self.root.ids.rate_type.active_segment
+            rate_type = seg.text if seg else "Фикс"   # ← ЗАЩИТА
 
             d = float(self.root.ids.dist.text or 0)
             r = float(self.root.ids.rate.text or 0)
@@ -151,28 +151,26 @@ class CanterApp(MDApp):
             refrig = self.root.ids.refrig.active
 
             if d <= 0:
-                raise ValueError("Некорректная дистанция")
+                raise ValueError("Дистанция должна быть больше 0")
 
-            if rt == "Фикс":
+            if rate_type == "Фикс":
                 income = r
-            elif rt == "₽/км":
+            elif rate_type == "₽/км":
                 income = d * r
             else:
-                paid_hours = max(0, h - 1)
-                income = paid_hours * HOUR_RATE
+                income = max(0, h - 1) * HOUR_RATE
 
             fuel100 = fuel_per_100km(t, refrig)
-            fuel_liters = d * fuel100 / 100
-            fuel_cost = fuel_liters * fuel_price
-
+            fuel_cost = d * fuel100 / 100 * fuel_price
             amort = d * AMORT
+
             gross = income - fuel_cost - amort
             tax = gross * TAX if gross > 0 else 0
             profit = gross - tax
             margin = (profit / income * 100) if income > 0 else 0
 
             self.root.ids.rep_text.text = (
-                f"📋 РАСЧЁТ РЕЙСА\n"
+                f"🚛 РАСЧЁТ РЕЙСА\n\n"
                 f"Пробег: {d:.1f} км\n"
                 f"Тоннаж: {t:.1f} т\n"
                 f"Реф: {'Да' if refrig else 'Нет'}\n\n"
@@ -197,5 +195,5 @@ class CanterApp(MDApp):
             self.root.ids.rep_text.text += "\n\n✅ Скопировано"
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     CanterApp().run()
